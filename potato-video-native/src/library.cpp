@@ -263,16 +263,22 @@ int internalProcess(double from_seconds, double end_seconds, AVOutputFormat *ofm
 
 
     //    int64_t start_from = 8*AV_TIME_BASE;
-    ret = av_seek_frame(ifmt_ctx, -1, from_seconds * AV_TIME_BASE, AVSEEK_FLAG_FRAME);
+    ret = av_seek_frame(ifmt_ctx, -1, from_seconds * AV_TIME_BASE+ifmt_ctx->start_time, AVSEEK_FLAG_FRAME|AVSEEK_FLAG_BACKWARD);
     if (ret < 0) {
         fprintf(stderr, "Error seek\n");
         return ret;
     }
 
-    int64_t *dts_start_from = static_cast<int64_t *>(malloc(sizeof(int64_t) * ifmt_ctx->nb_streams));
-    memset(dts_start_from, 0, sizeof(int64_t) * ifmt_ctx->nb_streams);
-    int64_t *pts_start_from = static_cast<int64_t *>(malloc(sizeof(int64_t) * ifmt_ctx->nb_streams));
-    memset(pts_start_from, 0, sizeof(int64_t) * ifmt_ctx->nb_streams);
+    int n=ofmt_ctx->nb_streams;
+    int64_t max=std::numeric_limits<int64_t>::max();
+    int64_t *dts_start_from = new int64_t[n];
+    for (int j = 0; j < n; ++j) {
+        dts_start_from[j]=max;
+    }
+    int64_t *pts_start_from = new int64_t[n];
+    for (int j = 0; j < n; ++j) {
+        pts_start_from[j]=max;
+    }
 
     while (1) {
         AVStream *in_stream, *out_stream;
@@ -286,37 +292,42 @@ int internalProcess(double from_seconds, double end_seconds, AVOutputFormat *ofm
             continue;
         }
         in_stream = ifmt_ctx->streams[pkt.stream_index];
-        out_stream = ofmt_ctx->streams[pkt.stream_index];
+        pkt.stream_index=o;
+        out_stream = ofmt_ctx->streams[o];
 
-        log_packet(ifmt_ctx, &pkt, "in");
-
-        if (av_q2d(in_stream->time_base) * pkt.pts > end_seconds) {
+        double current_time=av_q2d(in_stream->time_base) * pkt.pts;
+//        if(pkt.pts<0||pkt.dts<0){
+//            continue;
+//        }
+//        if(current_time<0){
+//            continue;
+//        }
+        if (current_time > end_seconds) {
             av_packet_unref(&pkt);
             break;
         }
 
-        if (dts_start_from[pkt.stream_index] == 0) {
+        if (dts_start_from[pkt.stream_index] == max) {
             dts_start_from[pkt.stream_index] = pkt.dts;
             printf("dts_start_from: %s\n", av_ts2str(dts_start_from[pkt.stream_index]));
         }
-        if (pts_start_from[pkt.stream_index] == 0) {
+        if (pts_start_from[pkt.stream_index] == max) {
             pts_start_from[pkt.stream_index] = pkt.pts;
             printf("pts_start_from: %s\n", av_ts2str(pts_start_from[pkt.stream_index]));
         }
+
+        log_packet(ifmt_ctx, &pkt, "in");
 
         /* copy packet */
         pkt.pts = av_rescale_q_rnd(pkt.pts - pts_start_from[pkt.stream_index], in_stream->time_base,
                                    out_stream->time_base, AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX);
         pkt.dts = av_rescale_q_rnd(pkt.dts - dts_start_from[pkt.stream_index], in_stream->time_base,
                                    out_stream->time_base, AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX);
-        if (pkt.pts < 0) {
-            pkt.pts = 0;
-        }
-        if (pkt.dts < 0) {
-            pkt.dts = 0;
-        }
-        pkt.duration = (int) av_rescale_q((int64_t) pkt.duration, in_stream->time_base, out_stream->time_base);
+        pkt.duration = av_rescale_q(pkt.duration, in_stream->time_base, out_stream->time_base);
         pkt.pos = -1;
+        if(pkt.pts < pkt.dts) {
+            continue;
+        }
         log_packet(ofmt_ctx, &pkt, "out");
         printf("\n");
 
