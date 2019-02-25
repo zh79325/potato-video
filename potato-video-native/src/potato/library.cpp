@@ -11,8 +11,11 @@ int64_t all(AVRounding a, AVRounding b) {
 int internalProcess(double from_seconds, double end_seconds, AVOutputFormat *pFormat, AVFormatContext *pContext,
                     AVFormatContext *pFormatContext, const char *in_filename, const char *out_filename);
 
-void hello() {
-    std::cout << "Hello, World!" << std::endl;
+void show_video_info(char *filename){
+    AVFormatContext *context=NULL;
+    avformat_open_input(&context, filename, 0, 0);
+    av_dump_format(context, 0, filename, 0);
+    avformat_close_input(&context);
 }
 
 void log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt, const char *tag) {
@@ -65,8 +68,8 @@ int concat_video(const char *dest, char *src1, char *src2) {
 
     avformat_alloc_output_context2(&o_fmt_ctx, NULL, NULL, dest);
 
-    map<AVMediaType, StreamInfo*>stream_mapping;
-
+    StreamInfo **output_streams=new StreamInfo*[i_fmt_ctx->nb_streams];
+    map<AVMediaType,StreamInfo*> streamMap;
     for (int i = 0; i < i_fmt_ctx->nb_streams; i++) {
         AVStream *in_stream = i_fmt_ctx->streams[i];
 
@@ -76,18 +79,18 @@ int concat_video(const char *dest, char *src1, char *src2) {
         if (in_codecpar->codec_type != AVMEDIA_TYPE_AUDIO &&
             in_codecpar->codec_type != AVMEDIA_TYPE_VIDEO &&
             in_codecpar->codec_type != AVMEDIA_TYPE_SUBTITLE) {
+            output_streams[i]=NULL;
             continue;
         }
         StreamInfo* info=new StreamInfo();
-        stream_mapping[in_codecpar->codec_type]=info;
-        info->active= true;
+        output_streams[i]=info;
+        streamMap[in_codecpar->codec_type]=info;
         AVStream *out_stream = avformat_new_stream(o_fmt_ctx, NULL);
         info->output=out_stream;
         if (!out_stream) {
             fprintf(stderr, "Failed allocating output stream\n");
             return AVERROR_UNKNOWN;
         }
-
         int ret = avcodec_parameters_copy(out_stream->codecpar, in_codecpar);
         if (ret < 0) {
             fprintf(stderr, "Failed to copy context from input to output stream codec context\n");
@@ -128,13 +131,10 @@ int concat_video(const char *dest, char *src1, char *src2) {
 
             AVStream * input= i_fmt_ctx->streams[i_pkt.stream_index];
             AVMediaType type=input->codecpar->codec_type;
-            if(!stream_mapping.count(type)){
+            if(!streamMap.count(type)){
                 continue;
             }
-            StreamInfo *info=stream_mapping[type];
-            if(!info->active){
-                continue;
-            }
+            StreamInfo *info=streamMap[type];
 
             /*
              * pts and dts should increase monotonically
@@ -149,22 +149,15 @@ int concat_video(const char *dest, char *src1, char *src2) {
                                          info->output->time_base, AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX);;
             i_pkt.duration = av_rescale_q(i_pkt.duration,  input->time_base,  info->output->time_base);
             i_pkt.pos = -1;
-//            i_pkt.stream_index = 0;
-
-            //printf("%lld %lld\n", i_pkt.pts, i_pkt.dts);
-//            static int num = 1;
-//            printf("frame %d\n", num++);
             av_interleaved_write_frame(o_fmt_ctx, &i_pkt);
-            //av_free_packet(&i_pkt);
-            //av_init_packet(&i_pkt);
         }
         av_packet_unref(&i_pkt);
 
-        for (std::pair<AVMediaType, StreamInfo*> element : stream_mapping) {
+        for (std::pair<AVMediaType, StreamInfo*> element : streamMap) {
             StreamInfo* info = element.second;
-            info->start_pts+=info->pts+1;
+            info->start_pts+=info->pts;
             info->pts=0;
-            info->start_dts+=info->dts+1;
+            info->start_dts+=info->dts;
             info->dts=0;
         }
 

@@ -6,11 +6,11 @@
 #include "StreamInfo.h"
 
 #include <iostream>
-#include "fmpeg/libavutil/mathematics.h"
+#include "../fmpeg/libavutil/mathematics.h"
 int cut_video(double from_seconds, double end_seconds, const char *in_filename, const char *out_filename);
 
 int concat_video(const char *dest,   char *src1,   char *src2);
 
-void hello();
+void show_video_info(char *filename);
 
 #endif

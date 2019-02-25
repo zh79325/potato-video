@@ -12,9 +12,12 @@ file(GLOB_RECURSE fmpeg_extend
         "src/fmpeg/*.cpp"
         "src/fmpeg/*.c"
         )
-
-set(LIB_SOURCE_FILES src/library.cpp
-        src/library.h
+file(GLOB_RECURSE potato_source
+        "src/potato/*.h"
+        "src/potato/*.cpp"
+        "src/potato/*.c"
+        )
+set(LIB_SOURCE_FILES ${potato_source}
         ${fmpeg_extend})
 add_library(potato_video_native ${LIB_SOURCE_FILES})
 
