@@ -10,7 +10,7 @@
 #include "../common/common_util.h"
 #include <iostream>
 
-int concat_video(const char *dest,   char *src1,   char *src2);
+int concat_video(const char *dest, const  char *src1, const  char *src2);
 
 
 

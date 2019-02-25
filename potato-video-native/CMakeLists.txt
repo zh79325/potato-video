@@ -1,42 +1,20 @@
 cmake_minimum_required(VERSION 3.13)
 project(potato_video_native)
 
-set(CMAKE_CXX_STANDARD 14)
-
 
 include_directories(/usr/local/Cellar/ffmpeg/4.1.1/include/)
 link_directories(/usr/local/Cellar/ffmpeg/4.1.1/lib/)
 
-file(GLOB_RECURSE fmpeg_extend
-        "src/fmpeg/*.h"
-        "src/fmpeg/*.cpp"
-        "src/fmpeg/*.c"
-        )
-file(GLOB_RECURSE potato_source
-        "src/potato/*.h"
-        "src/potato/*.cpp"
-        "src/potato/*.c"
-        )
-set(LIB_SOURCE_FILES ${potato_source}
-        ${fmpeg_extend})
-add_library(potato_video_native ${LIB_SOURCE_FILES})
+
+set(CMAKE_CXX_STANDARD 14)
+
+set(SOURCE_FILES main.cpp)
+
+add_executable(demo ${SOURCE_FILES})
 
 
-set(DEMO_SOURCE_FILES src/main.cpp
-        ${LIB_SOURCE_FILES})
 
-add_executable(FfmpegDemo ${DEMO_SOURCE_FILES})
+add_subdirectory(src)
+add_subdirectory(tests)
 
-target_link_libraries(
-        potato_video_native
-        avcodec
-        avdevice
-        avfilter
-        avformat
-        avresample
-        avutil
-        postproc
-        swresample
-        swscale
-)
-target_link_libraries(FfmpegDemo potato_video_native)
+target_link_libraries(demo potato_video_native_lib)

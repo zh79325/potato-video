@@ -6,7 +6,7 @@
 #include <map>
 using  namespace std;
 
-int concat_video(const char *dest, char *src1, char *src2) {
+int concat_video(const char *dest,const char *src1,const char *src2) {
     AVFormatContext *i_fmt_ctx=NULL;
 
 
@@ -61,8 +61,8 @@ int concat_video(const char *dest, char *src1, char *src2) {
     avformat_write_header(o_fmt_ctx, NULL);
 
     char *files[2];
-    files[0] = src1;
-    files[1] = src2;
+    files[0] = const_cast<char *>(src1);
+    files[1] = const_cast<char *>(src2);
     for (int i = 0; i < 2; i++) {
         i_fmt_ctx = NULL;
         if (avformat_open_input(&i_fmt_ctx, files[i], NULL, NULL) != 0) {
