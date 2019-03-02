@@ -13,5 +13,6 @@ void show_video_info(char *filename);
 
 void log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt, const char *tag);
 
+void printError(int ret);
 
 #endif //POTATO_VIDEO_NATIVE_COMMON_UTIL_H

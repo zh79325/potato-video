@@ -21,3 +21,11 @@ void log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt, const char 
            av_ts2str(pkt->duration), av_ts2timestr(pkt->duration, time_base),
            pkt->stream_index);
 }
+
+void printError(int ret) {
+    char err[1000];
+    av_strerror(ret,err,1000);
+//    printf(err);
+    av_log(NULL, AV_LOG_ERROR, err);
+    av_log(NULL, AV_LOG_ERROR, "\n");
+}

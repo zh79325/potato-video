@@ -10,6 +10,7 @@ using namespace std;
 int main() {
     string resourceFolder="/Users/zh_zhou/Desktop/video/resources/";
     string movie = resourceFolder+"mv.mp4";
+    scale_movie(100,100,movie.c_str(),NULL);
     char *output = "/Users/zh_zhou/Desktop/video/out.mp4";
     int durition = 5;
     int n=10;

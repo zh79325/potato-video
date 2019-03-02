@@ -3,8 +3,8 @@
 #include "common/common_util.h"
 #include "movie/movie_cut.h"
 #include "movie/movie_concat.h"
-
-
+#include "movie/movie_scale.h"
+#include "movie/watermark.h"
 
 
 

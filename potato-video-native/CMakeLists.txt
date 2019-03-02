@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.13)
 project(potato_video_native)
 
 
+
 include_directories(/usr/local/Cellar/ffmpeg/4.1.1/include/)
 link_directories(/usr/local/Cellar/ffmpeg/4.1.1/lib/)
 

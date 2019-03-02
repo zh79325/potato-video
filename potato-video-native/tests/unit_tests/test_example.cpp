@@ -8,9 +8,13 @@
 #include <string>
 
 using namespace std;
+string resourceFolder="/Users/zh_zhou/Desktop/video/resources/";
+string getMovie(string name){
+    return resourceFolder+name;
+}
 TEST(Movie, cut) {
-    string resourceFolder="/Users/zh_zhou/Desktop/video/resources/";
-    string movie = resourceFolder+"mv.mp4";
+
+    string movie = getMovie("mv.mp4");
     char *output = "/Users/zh_zhou/Desktop/video/out.mp4";
     int durition = 5;
     int n=10;
@@ -32,4 +36,16 @@ TEST(Movie, concat){
             "/Users/zh_zhou/Desktop/video/out/1.mp4"
     };
     concat_video(mix,files[0].c_str(),files[1].c_str());
+}
+
+TEST(Movie, scale){
+    string movie = getMovie("dy.mp4");
+    string movieOut = getMovie("mv.out.mp4");
+    string img = getMovie("../my_logo.png");
+    watermark_movie(movie.c_str(),movieOut.c_str(),img.c_str());
+}
+
+TEST(Movie,watermark){
+    string movie = getMovie("mv.mp4");
+    add_water_mark(movie.c_str(),NULL);
 }

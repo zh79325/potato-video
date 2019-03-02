@@ -2,6 +2,8 @@
 project(${CMAKE_PROJECT_NAME}_lib)
 
 
+
+set(FFMPEG_SOURCE_FILES ${fmpeg_src})
 file(GLOB_RECURSE fmpeg_extend
         "fmpeg/*.h"
         "fmpeg/*.cpp"
