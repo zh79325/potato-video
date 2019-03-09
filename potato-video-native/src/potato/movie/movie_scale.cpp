@@ -379,6 +379,20 @@ static int encode_write_frame(AVFormatContext *ifmt_ctx, AVFormatContext *ofmt_c
     int o_index = stream_ctx[stream_index].output_stream_index;
     EncodeParam param;
 
+    int w=50,h=50;
+    AVStream*is= ifmt_ctx->streams[stream_ctx[stream_index].input_stream_index];
+    AVStream*os= ofmt_ctx->streams[stream_ctx[stream_index].output_stream_index];
+    SwsContext *sws_ctx = sws_getContext(filt_frame->width, filt_frame->height,is->codec->pix_fmt  ,
+                             w, h, is->codec->pix_fmt,
+                             SWS_BILINEAR, NULL, NULL, NULL);
+
+    AVFrame* frame2 = av_frame_alloc();
+    int num_bytes = avpicture_get_size(is->codec->pix_fmt, w, h);
+    uint8_t* frame2_buffer = (uint8_t *)av_malloc(num_bytes*sizeof(uint8_t));
+    av_image_fill_arrays(frame2->data, frame2->linesize,frame2_buffer, is->codec->pix_fmt, w, h,32);
+
+    sws_scale(sws_ctx, filt_frame->data, filt_frame->linesize, 0, filt_frame->height, frame2->data, frame2->linesize);
+
 
     int p = avcodec_send_frame(stream_ctx[stream_index].enc_ctx, filt_frame);
     if (p < 0) {
